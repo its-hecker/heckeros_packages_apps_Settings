@@ -7,6 +7,17 @@ public final class PifProfileTest {
         if (!value) throw new AssertionError(message);
     }
     public static void main(String[] args) throws Exception {
+        if (args.length > 0 && "--live".equals(args[0])) {
+            Map<String,String> live = PixelBetaProfileFetcher.fetch();
+            System.out.println("Google metadata smoke: " + live.get("MODEL") + " / "
+                    + live.get("DEVICE") + " / " + live.get("SECURITY_PATCH"));
+            return;
+        }
+        String fixture = "<table><tr><td>Pixel 8</td><td><button>shiba_beta-ota-build.zip</button></td></tr>"
+                + "<tr><td>Pixel 8a</td><td>akita_beta-ota-build.zip</td></tr></table>"
+                + "<div>modal URL for shiba_beta below all device rows</div>";
+        check("Pixel 8".equals(PixelBetaProfileFetcher.modelForProduct(fixture,"shiba_beta")),
+                "modal OTA URL must retain the matching model");
         String fp = "google/shiba_beta/shiba:17/CP21.260330.011/123456:user/release-keys";
         Map<String,String> fields = new LinkedHashMap<>(Map.of("FINGERPRINT",fp,
                 "MODEL","Pixel 8","SECURITY_PATCH","2026-05-05"));

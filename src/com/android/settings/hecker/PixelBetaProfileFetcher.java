@@ -52,11 +52,7 @@ final class PixelBetaProfileFetcher {
                                 + "([^/\"<>]+_beta)[^\"<>]*)\"").matcher(html);
                         while (links.find()) {
                             String product = links.group(2);
-                            String prefix = html.substring(0, links.start());
-                            Matcher cells = Pattern.compile("<td[^>]*>([^<]+)</td>")
-                                    .matcher(prefix);
-                            String model = "Google Pixel";
-                            while (cells.find()) model = cells.group(1).trim();
+                            String model = modelForProduct(html, product);
                             try {
                                 return fromMetadata(get(links.group(1).replace("&amp;", "&"),
                                         4096, true), product, model);
@@ -71,10 +67,28 @@ final class PixelBetaProfileFetcher {
         throw last;
     }
 
+    static String modelForProduct(String html, String product) throws IOException {
+        // Google's actual OTA URLs can live in modals below the device table.
+        // Match the product filename to its row rather than the last preceding cell.
+        Matcher rows = Pattern.compile("<tr\\b[^>]*>(.*?)</tr>", Pattern.DOTALL).matcher(html);
+        while (rows.find()) {
+            String row = rows.group(1);
+            if (!row.contains(product + "-ota-")) continue;
+            Matcher cell = Pattern.compile("<td[^>]*>(.*?)</td>", Pattern.DOTALL).matcher(row);
+            if (!cell.find()) continue;
+            String model = cell.group(1).replaceAll("<[^>]*>", "")
+                    .replace("&nbsp;", " ").replaceAll("\\s+", " ").trim();
+            if (model.startsWith("Pixel ")) return model;
+        }
+        throw new IOException("Cannot match the beta product to Google's device table");
+    }
+
     static Map<String, String> fromMetadata(String metadata, String product, String model)
             throws IOException {
         String fingerprint = property(metadata, "post-build");
-        String patch = property(metadata, "security-patch-level");
+        String patch;
+        try { patch = property(metadata, "post-security-patch-level"); }
+        catch (IOException missingPostPatch) { patch = property(metadata, "security-patch-level"); }
         Map<String, String> profile = new LinkedHashMap<>();
         profile.put("MANUFACTURER", "Google");
         profile.put("MODEL", model);

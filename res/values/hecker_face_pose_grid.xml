@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pixel pose-grid rendering resources; provenance: libs/pixel-face-ui/ORIGIN.json. -->
+<resources>
+    <color name="blue_500">#ff4285f4</color>
+    <color name="face_enroll_cell_enrolled">#14ffffff</color>
+    <color name="face_enroll_cell_no_activity_end">#ffd2e3fc</color>
+    <color name="face_enroll_cell_no_activity_start">#00d2e3fc</color>
+    <color name="face_enroll_cell_not_enrolled">#ff4285f4</color>
+    <color name="face_enroll_cell_not_enrolled_primary">#b24285f4</color>
+    <color name="face_enroll_cell_not_enrolled_secondary">#00ffffff</color>
+    <color name="face_enroll_cursor_acquired">#ffffffff</color>
+    <color name="face_enroll_cursor_gone">#00ffffff</color>
+    <color name="face_enroll_cursor_shadow">#ff979797</color>
+    <color name="face_enroll_grid">#e0dadec0</color>
+    <color name="face_enroll_indicator">#ff1a73e8</color>
+    <color name="face_enroll_no_activity_gone">#00000000</color>
+    <color name="face_enroll_no_activity_showing">#6637474f</color>
+    <integer-array name="face_enroll_primary_buckets">
+        <item>2</item>
+        <item>7</item>
+        <item>12</item>
+        <item>17</item>
+    </integer-array>
+    <string name="face_enrolling_turn_head_to_arrow">Turn your head toward the arrow</string>
+</resources>

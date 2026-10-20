@@ -99,6 +99,7 @@ android_library {
         "WindowManager-Shell-shared-desktopMode",
 
         // Settings dependencies
+        "HeckerPixelFacePoseGrid",
         "FingerprintManagerInteractor",
         "MediaDrmSettingsFlagsLib",
         "Settings-change-ids",
@@ -229,4 +230,18 @@ android_library_import {
 filegroup {
     name: "Settings_proguard_flags",
     srcs: ["proguard.flags"],
+}
+
+// Original Pixel box-grid renderer; native Settings owns enrollment.
+java_import {
+    name: "HeckerPixelFacePoseGrid",
+    licenses: ["HeckerPixelFacePoseGrid_license"],
+    jars: ["libs/pixel-face-ui/stock-pose-grid.jar"],
+    installable: false,
+}
+
+license {
+    name: "HeckerPixelFacePoseGrid_license",
+    license_kinds: ["legacy_proprietary"],
+    license_text: ["libs/pixel-face-ui/NOTICE"],
 }

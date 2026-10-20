@@ -250,6 +250,7 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
     @Override
     public void onResume() {
         super.onResume();
+        mProgressView.setEnrollmentActive(true);
 
         if (mHalOwnsCamera) {
             // The face HAL opens the camera itself and renders into this SurfaceView.
@@ -275,6 +276,7 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
 
     @Override
     public void onPause() {
+        mProgressView.setEnrollmentActive(false);
         super.onPause();
         if (mHalOwnsCamera) {
             mSurfaceView.getHolder().removeCallback(mSurfaceHolderCallback);
@@ -291,7 +293,7 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
 
     @Override
     public void onEnrollmentHelp(int helpMsgId, CharSequence helpString) {
-        mProgressView.setHelpState();
+        mProgressView.onEnrollmentHelp(helpMsgId, helpString);
     }
 
     @Override

@@ -6406,5 +6406,9 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name="com.android.settings.hecker.HeckerIntegrityActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SubSettings"
+            android:label="@string/hecker_integrity_title" />
     </application>
 </manifest>

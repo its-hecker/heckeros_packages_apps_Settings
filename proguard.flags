@@ -80,3 +80,7 @@
 
 # Keep the device state AppFunction schema
 -keep class com.google.android.appfunctions.schema.common.v1.devicestate.** { *; }
+
+# The pinned Pixel renderer has private UI timers with no close API.
+# Preserve the small curve graph so the native lifecycle adapter can stop them.
+-keep class com.google.android.settings.biometrics.face.anim.curve.** { *; }

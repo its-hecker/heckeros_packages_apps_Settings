@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hecker_integrity_title">Play Integrity</string>
+    <string name="hecker_integrity_description">Manage the compatibility profile used by Google Play services and the Play Store. Based on AxionOS. Results depend on Google’s current checks.</string>
+    <string name="hecker_integrity_fetch">Fetch Google beta profile</string>
+    <string name="hecker_integrity_import">Import a JSON or prop profile</string>
+    <string name="hecker_integrity_disable">Disable profile</string>
+    <string name="hecker_integrity_disabled">Disabled. No profile configured.</string>
+    <string name="hecker_integrity_disabled_restart">Profile disabled. Restart your phone to apply the change.</string>
+    <string name="hecker_integrity_current">Configured profile: %1$s</string>
+    <string name="hecker_integrity_loading">Loading profile…</string>
+    <string name="hecker_integrity_saved">Saved %1$s profile. Restart your phone to apply it.</string>
+    <string name="hecker_integrity_save_failed">Could not save the profile.</string>
+    <string name="hecker_integrity_fetch_failed">Could not load the profile: %1$s</string>
+</resources>

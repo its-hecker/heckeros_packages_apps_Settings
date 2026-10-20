@@ -52,7 +52,8 @@
             <com.android.settings.biometrics.face.FaceSquareFrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:clipChildren="false">
 
                 <com.android.settings.biometrics.face.FaceSquareTextureView
                     android:id="@+id/texture_view"

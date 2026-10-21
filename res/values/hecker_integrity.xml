@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="hecker_integrity_title">Play Integrity</string>
-    <string name="hecker_integrity_description">Manage the compatibility profile used by Google Play services and the Play Store. Based on AxionOS. Results depend on Google’s current checks.</string>
+    <string name="hecker_integrity_description">Manage Play Integrity, game profiles and TrickyStore compatibility. Based on AxionOS. Photos keeps its existing PixelOS configuration. Results depend on Google’s current checks.</string>
+    <string name="hecker_spoof_game_title">Game profiles</string>
+    <string name="hecker_spoof_game_description">Import an Axion game-props JSON file to select the device identity used by each listed game. Restart the game after changing its profile.</string>
+    <string name="hecker_spoof_target_title">TrickyStore apps</string>
+    <string name="hecker_spoof_target_description">Select apps that can use your imported keybox. Enter one package per line: automatic mode by default, ? for certificate replacement, or ! for software generation. JSON target lists are also supported. Changes apply to the primary user.</string>
+    <string name="hecker_spoof_keybox_title">Keybox</string>
+    <string name="hecker_spoof_keybox_description">Import your keybox XML or base64-encoded XML. It is stored privately and supplied only to the selected apps. No keybox is bundled. Removing it restores native certificate handling.</string>
+    <string name="hecker_spoof_patch_title">Attestation patch levels</string>
+    <string name="hecker_spoof_patch_description">Optional system, vendor and boot dates for the selected TrickyStore apps. This changes their attestation profile; it does not install security updates.</string>
+    <string name="hecker_spoof_edit">Edit configuration</string>
+    <string name="hecker_spoof_import">Import configuration</string>
+    <string name="hecker_spoof_disable">Disable this configuration</string>
+    <string name="hecker_spoof_remove_keybox">Remove imported keybox</string>
+    <string name="hecker_spoof_saved">Configuration saved. Restart your phone to apply all changes.</string>
+    <string name="hecker_spoof_configured">Configured</string>
+    <string name="hecker_spoof_unconfigured">No configuration imported</string>
+    <string name="hecker_spoof_target_hint">com.example.app\ncom.example.other?</string>
+    <string name="hecker_spoof_patch_hint">all=2026-10-05</string>
     <string name="hecker_integrity_fetch">Fetch Google beta profile</string>
     <string name="hecker_integrity_import">Import a JSON or prop profile</string>
     <string name="hecker_integrity_disable">Disable profile</string>

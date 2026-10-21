@@ -14,11 +14,13 @@ final class FacePoseGridGeometry {
     static float[] cell(int bucket) {
         if (bucket < 0 || bucket >= COUNT) throw new IllegalArgumentException("pose bucket");
         int row = bucket / SIDE, column = bucket % SIDE;
-        double step = Math.PI / SIDE;
-        double top = -Math.PI / 2 + row * step + GAP;
-        double bottom = -Math.PI / 2 + (row + 1) * step - GAP;
-        double left = -Math.PI / 2 + column * step + GAP;
-        double right = -Math.PI / 2 + (column + 1) * step - GAP;
+        // Trim the pole singularities so the outer buckets remain legible rounded cells.
+        double latitudeLimit = Math.toRadians(74), longitudeLimit = Math.toRadians(78);
+        double latitudeStep = 2 * latitudeLimit / SIDE, longitudeStep = 2 * longitudeLimit / SIDE;
+        double top = -latitudeLimit + row * latitudeStep + GAP;
+        double bottom = -latitudeLimit + (row + 1) * latitudeStep - GAP;
+        double left = -longitudeLimit + column * longitudeStep + GAP;
+        double right = -longitudeLimit + (column + 1) * longitudeStep - GAP;
         float[] points = new float[4 * EDGE_SAMPLES * 2];
         int offset = 0;
         for (int edge = 0; edge < 4; edge++) {

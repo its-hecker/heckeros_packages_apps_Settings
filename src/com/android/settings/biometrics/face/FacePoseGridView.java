@@ -75,7 +75,7 @@ final class FacePoseGridView extends View {
         mMaskPaint.setColor(themeColor(android.R.attr.colorBackground, 0xff071019));
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setPathEffect(new CornerPathEffect(dp(2.5f)));
+        mPaint.setPathEffect(new CornerPathEffect(dp(3.5f)));
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
@@ -236,7 +236,7 @@ final class FacePoseGridView extends View {
             }
             mPaint.setStrokeWidth(dp(1.15f + 0.55f * Math.max(reveal, guide)));
             int color = reveal > 0 ? mAccent : mNeutral;
-            int opacity = (int) ((inFrame ? 78 : 45) + (inFrame ? 150 : 90) * reveal);
+            int opacity = (int) ((inFrame ? 102 : 58) + (inFrame ? 126 : 77) * reveal);
             if (guide > 0) { color = mAccent; opacity = Math.max(opacity, (int) (220 * guide)); }
             mPaint.setColor(alpha(color, opacity));
             canvas.drawPath(cell, mPaint);

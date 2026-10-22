@@ -11,6 +11,12 @@ public final class FacePoseEnrollmentState {
     private int mCandidateState;
     private int mConsecutiveSamples;
 
+    public static boolean usesPoseGrid(String device, boolean halOwnsCamera) {
+        // Coral/flame deliver pose acquisition messages on both preview paths.
+        // This selects presentation only; camera ownership stays in the preview fragment.
+        return halOwnsCamera || "coral".equals(device) || "flame".equals(device);
+    }
+
     public static int bucketForHelp(int code) {
         return code >= 1101 && code <= 1125 ? code - 1101 : -1;
     }

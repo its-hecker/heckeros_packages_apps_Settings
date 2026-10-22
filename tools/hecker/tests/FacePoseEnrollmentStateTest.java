@@ -5,6 +5,11 @@ public final class FacePoseEnrollmentStateTest {
         if (!value) throw new AssertionError(message);
     }
     public static void main(String[] args) {
+        check(FacePoseEnrollmentState.usesPoseGrid("coral", false), "coral camera2 preview has pose grid");
+        check(FacePoseEnrollmentState.usesPoseGrid("flame", false), "flame camera2 preview has pose grid");
+        check(FacePoseEnrollmentState.usesPoseGrid("other", true), "existing HAL preview selection retained");
+        check(!FacePoseEnrollmentState.usesPoseGrid("other", false), "generic preview retains ring");
+        check(!FacePoseEnrollmentState.usesPoseGrid(null, false), "missing device retains ring");
         FacePoseEnrollmentState s = new FacePoseEnrollmentState();
         check(FacePoseEnrollmentState.bucketForHelp(1101) == 0, "first bucket");
         check(FacePoseEnrollmentState.bucketForHelp(1125) == 24, "last bucket");

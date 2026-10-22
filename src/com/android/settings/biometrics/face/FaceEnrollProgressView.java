@@ -2,19 +2,21 @@
 package com.android.settings.biometrics.face;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 import com.android.settings.R;
 
-/** Selects the Pixel pose grid for HAL-owned preview and the existing ring elsewhere. */
+/** Pixel pose guidance is independent of whether the HAL or Settings renders the preview. */
 public class FaceEnrollProgressView extends FrameLayout {
     private final FacePoseGridView mGrid;
     private final FaceEnrollRingView mRing;
 
     public FaceEnrollProgressView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        if (getResources().getBoolean(R.bool.config_face_enroll_hal_owns_camera)) {
+        if (FacePoseEnrollmentState.usesPoseGrid(Build.DEVICE,
+                getResources().getBoolean(R.bool.config_face_enroll_hal_owns_camera))) {
             mGrid = new FacePoseGridView(context);
             mRing = null;
             setClipChildren(false);

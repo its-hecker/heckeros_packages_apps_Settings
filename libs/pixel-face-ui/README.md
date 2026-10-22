@@ -1,6 +1,9 @@
 HeckerOS face enrollment uses its own native curved 25-cell pose mesh in
 `FacePoseGridView` and `FacePoseGridGeometry`. The cells keep the Pixel HAL's
 row-major bucket order (help codes 1101–1125). The center is bucket 12 / code 1113.
+Coral and flame select the mesh independently of preview camera ownership. Both
+the HAL-owned surface and the existing Camera2 texture can display pose guidance;
+the original camera ownership configuration still controls preview setup.
 Captured poses receive a short theme-accent outline/fill transition. The camera
 preview remains visible through the low-opacity cells. A quiet outer ring and
 one brief missing-angle cue replace the stock overlay's heavier scrims.

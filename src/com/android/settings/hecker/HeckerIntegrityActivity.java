@@ -33,6 +33,7 @@ public final class HeckerIntegrityActivity extends Activity {
     private static final String KEY = "hecker_pif_config";
     private static final int PICK_PROFILE = 44;
     private final ExecutorService mWorker = Executors.newSingleThreadExecutor();
+    private com.airbnb.lottie.LottieAnimationView mArt;
     private TextView mStatus;
     private Button mFetch;
     private Button mImport;
@@ -45,26 +46,35 @@ public final class HeckerIntegrityActivity extends Activity {
         super.onCreate(savedState);
         mImportKind = savedState == null ? 0 : savedState.getInt("import_kind", 0);
         setTitle(R.string.hecker_integrity_title);
-        if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getActionBar() != null) getActionBar().hide();
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
+        int padding = dp(20);
         content.setPadding(padding, padding, padding, padding);
-        TextView description = new TextView(this);
+        LinearLayout hero = card();
+        mArt = new com.airbnb.lottie.LottieAnimationView(this);
+        mArt.setAnimation(R.raw.hecker_integrity);
+        mArt.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        mArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        hero.addView(mArt, new LinearLayout.LayoutParams(-1, dp(156)));
+        TextView description = label(15, false);
         description.setText(R.string.hecker_integrity_description);
-        content.addView(description);
-        mStatus = new TextView(this);
+        hero.addView(description); content.addView(hero);
+        LinearLayout profile = card();
+        mStatus = label(16, true);
         mStatus.setPadding(0, padding, 0, padding);
         mStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        content.addView(mStatus);
+        profile.addView(mStatus);
         mFetch = new Button(this);
         mFetch.setText(R.string.hecker_integrity_fetch);
         mFetch.setOnClickListener(view -> fetchProfile());
-        content.addView(mFetch);
+        styleButton(mFetch);
+        profile.addView(mFetch);
         mImport = new Button(this);
         mImport.setText(R.string.hecker_integrity_import);
         mImport.setOnClickListener(view -> pick(0));
-        content.addView(mImport);
+        styleButton(mImport);
+        profile.addView(mImport);
         mDisable = new Button(this);
         mDisable.setText(R.string.hecker_integrity_disable);
         mDisable.setOnClickListener(view -> {
@@ -72,7 +82,9 @@ public final class HeckerIntegrityActivity extends Activity {
                 mStatus.setText(R.string.hecker_integrity_disabled_restart);
             } else mStatus.setText(R.string.hecker_integrity_save_failed);
         });
-        content.addView(mDisable);
+        styleButton(mDisable);
+        profile.addView(mDisable);
+        content.addView(profile);
         addSection(content, R.string.hecker_spoof_game_title, R.string.hecker_spoof_game_description,
                 HeckerSpoofConfig.GAMES, false);
         addSection(content, R.string.hecker_spoof_target_title, R.string.hecker_spoof_target_description,
@@ -81,9 +93,7 @@ public final class HeckerIntegrityActivity extends Activity {
                 HeckerSpoofConfig.KEYBOX, false);
         addSection(content, R.string.hecker_spoof_patch_title, R.string.hecker_spoof_patch_description,
                 HeckerSpoofConfig.PATCH, true);
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(content);
-        setContentView(scroll);
+        present(content);
         String current = Settings.Global.getString(getContentResolver(), KEY);
         mStatus.setText(current == null || current.isEmpty()
                 ? getString(R.string.hecker_integrity_disabled)
@@ -109,6 +119,7 @@ public final class HeckerIntegrityActivity extends Activity {
 
     private Button button(LinearLayout content, int title, View.OnClickListener listener) {
         Button button = new Button(this);
+        styleButton(button);
         button.setText(title);
         button.setOnClickListener(listener);
         content.addView(button);
@@ -117,23 +128,78 @@ public final class HeckerIntegrityActivity extends Activity {
     }
 
     private void addSection(LinearLayout content, int title, int description, int kind, boolean editable) {
-        TextView heading = new TextView(this);
+        LinearLayout section = card();
+        TextView heading = label(20, true);
         heading.setText(title);
-        heading.setTextSize(20);
-        heading.setPadding(0, 40, 0, 12);
         heading.setAccessibilityHeading(true);
-        content.addView(heading);
-        TextView detail = new TextView(this);
-        detail.setText(description);
-        content.addView(detail);
-        TextView status = new TextView(this);
-        content.addView(status);
+        section.addView(heading);
+        TextView detail = label(14, false);
+        detail.setText(description); section.addView(detail);
+        TextView status = label(14, true); section.addView(status);
         mConfigStatus.put(kind, status);
-        if (editable) button(content, R.string.hecker_spoof_edit, view -> edit(kind));
-        button(content, R.string.hecker_spoof_import, view -> pick(kind));
-        button(content, kind == HeckerSpoofConfig.KEYBOX ? R.string.hecker_spoof_remove_keybox
+        if (editable) button(section, R.string.hecker_spoof_edit, view -> edit(kind));
+        button(section, R.string.hecker_spoof_import, view -> pick(kind));
+        button(section, kind == HeckerSpoofConfig.KEYBOX ? R.string.hecker_spoof_remove_keybox
                 : R.string.hecker_spoof_disable, view -> saveConfig(kind, null));
+        content.addView(section);
     }
+
+    private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+    private boolean dark() { return (getResources().getConfiguration().uiMode & 48) == 32; }
+    private int foreground() { return dark() ? 0xffeef4ff : 0xff15243c; }
+    private TextView label(int size, boolean bold) {
+        TextView t = new TextView(this); t.setTextSize(size); t.setTextColor(foreground());
+        t.setPadding(0, dp(6), 0, dp(6));
+        if (bold) t.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
+        return t;
+    }
+    private android.graphics.drawable.GradientDrawable surface(int color, int radius) {
+        android.graphics.drawable.GradientDrawable d = new android.graphics.drawable.GradientDrawable();
+        d.setColor(color); d.setCornerRadius(dp(radius)); return d;
+    }
+    private LinearLayout card() {
+        LinearLayout c = new LinearLayout(this); c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(dp(20), dp(16), dp(20), dp(16));
+        c.setBackground(surface(dark() ? 0xff17253c : 0xffedf3ff, 26));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.bottomMargin = dp(16); c.setLayoutParams(lp); return c;
+    }
+    private void styleButton(Button b) {
+        b.setAllCaps(false); b.setTextSize(14); b.setTextColor(foreground());
+        b.setMinHeight(dp(48)); b.setPadding(dp(16), dp(12), dp(16), dp(12));
+        b.setBackground(new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(0x335eb8ff),
+                surface(dark() ? 0xff283f61 : 0xffd6e5ff, 18), null));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.topMargin = dp(8); b.setLayoutParams(lp);
+    }
+    private void present(LinearLayout content) {
+        getWindow().setDecorFitsSystemWindows(false);
+        LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(dark() ? 0xff0c1526 : 0xfff7f9ff);
+        LinearLayout toolbar = new LinearLayout(this); toolbar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        toolbar.setPadding(dp(16), dp(8), dp(16), dp(8)); toolbar.setMinimumHeight(dp(56));
+        Button back = new Button(this); styleButton(back); back.setText("‹"); back.setTextSize(28);
+        back.setContentDescription(getString(R.string.hecker_integrity_back)); back.setOnClickListener(v -> finish());
+        toolbar.addView(back, new LinearLayout.LayoutParams(dp(52), -2));
+        TextView title = label(22, true); title.setText(getTitle()); title.setAccessibilityHeading(true);
+        toolbar.addView(title, new LinearLayout.LayoutParams(0, -2, 1)); root.addView(toolbar);
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.addView(content);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            android.graphics.Insets bars = insets.getInsets(android.view.WindowInsets.Type.systemBars()
+                    | android.view.WindowInsets.Type.displayCutout() | android.view.WindowInsets.Type.ime());
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return android.view.WindowInsets.CONSUMED;
+        });
+        setContentView(root); root.post(root::requestApplyInsets);
+    }
+    @Override protected void onStart() {
+        super.onStart();
+        if (mArt != null && android.animation.ValueAnimator.areAnimatorsEnabled()) mArt.playAnimation();
+        else if (mArt != null) mArt.setProgress(.5f);
+    }
+    @Override protected void onStop() { if (mArt != null) mArt.cancelAnimation(); super.onStop(); }
 
     private void refreshConfigStatus() {
         mWorker.execute(() -> {

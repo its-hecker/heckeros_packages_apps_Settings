@@ -62,10 +62,10 @@ public final class SpoofingMaintenance extends JobService {
             String before=data.get(HeckerSpoofConfig.KEYBOX);
             String source=data.prefs.getString("keybox_source",null);
             if("user".equals(source)||(source==null&&before!=null&&!before.isBlank()))return;
-            KeyboxStatus existing=KeyboxStatus.check(before,true);
+            KeyboxStatus existing=KeyboxStatus.check(before,true,data.prefs);
             if(existing.state==KeyboxStatus.State.VALID||existing.state==KeyboxStatus.State.UNKNOWN)return;
             String fresh=KeyboxStatus.xml(SpoofingHttp.get(SpoofingHttp.KEYBOX,256*1024));
-            KeyboxStatus checked=KeyboxStatus.check(fresh,true);
+            KeyboxStatus checked=KeyboxStatus.check(fresh,true,data.prefs);
             if(checked.state!=KeyboxStatus.State.VALID&&checked.state!=KeyboxStatus.State.EXPIRING)return;
             if(enabled(data,stopped)&&data.trickyEnabled()&&!"user".equals(data.prefs.getString("keybox_source",null))&&Objects.equals(before,data.get(HeckerSpoofConfig.KEYBOX))){
                 data.put(HeckerSpoofConfig.KEYBOX,fresh);

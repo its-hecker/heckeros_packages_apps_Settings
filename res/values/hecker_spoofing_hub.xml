@@ -90,4 +90,8 @@
   <string name="hub_profile_status">Fingerprint status</string>
   <string name="hub_patch_age">Patch %1$s · %2$d days old</string>
   <string name="hub_canary_estimate">Estimated refresh window: %1$d days (from patch month)</string>
+    <string name="hub_key_fetch_reason">The keybox was not replaced: %1$s</string>
+    <string name="hub_key_saved_unknown">Keybox saved. Live revocation could not be checked; status is unverified.</string>
+    <string name="hub_key_not_yet_valid">Certificate is not valid yet. Check the phone’s date and time.</string>
+    <string name="hub_restart_needed">Keybox saved. Use Restart Google services to activate it.</string>
 </resources>

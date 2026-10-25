@@ -90,4 +90,8 @@
   <string name="hub_patch_age">补丁 %1$s · 已过去 %2$d 天</string>
   <string name="hub_canary_estimate">预计更新窗口：%1$d 天（根据补丁月份推算）</string>
   <string name="hub_valid_badge">有效</string>
+    <string name="hub_key_fetch_reason">未替换密钥箱：%1$s</string>
+    <string name="hub_key_saved_unknown">已保存密钥箱，但无法在线检查吊销状态；状态未验证。</string>
+    <string name="hub_key_not_yet_valid">证书尚未生效。请检查手机的日期和时间。</string>
+    <string name="hub_restart_needed">密钥箱已保存。请重启 Google 服务以启用。</string>
 </resources>

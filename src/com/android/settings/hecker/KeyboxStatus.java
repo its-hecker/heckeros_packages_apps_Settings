@@ -19,7 +19,7 @@ import org.json.*;
 
 /** Public certificate diagnostics. VALID requires a live revocation response and trusted chains. */
 final class KeyboxStatus {
-    enum State { MISSING, UNKNOWN, VALID, EXPIRING, EXPIRED, REVOKED, SUSPENDED, INVALID, UNTRUSTED }
+    enum State { MISSING, UNKNOWN, VALID, EXPIRING, EXPIRED, NOT_YET_VALID, REVOKED, SUSPENDED, INVALID, UNTRUSTED }
     final State state;
     final long checkedAt,expiresAt;
     final int chains;
@@ -71,12 +71,20 @@ final class KeyboxStatus {
         return result;
     }
     static KeyboxStatus check(String raw,boolean network){
+        return check(raw,network,null);
+    }
+    static KeyboxStatus check(String raw,boolean network,android.content.SharedPreferences cache){
         if(raw==null||raw.isBlank())return new KeyboxStatus(State.MISSING,0,0,0);
         List<List<X509Certificate>> chains;
         try{chains=chains(xml(raw));}catch(Exception bad){return new KeyboxStatus(State.INVALID,0,0,0);}
         String revocation=null,anchors=null;
         if(network){
-            try{anchors=SpoofingHttp.get(SpoofingHttp.ROOTS,256*1024);}catch(IOException unavailable){}
+            try{
+                anchors=SpoofingHttp.get(SpoofingHttp.ROOTS,256*1024);
+                if(roots(anchors).isEmpty())anchors=null;
+                else if(cache!=null)cache.edit().putString("attestation_public_roots",anchors).apply();
+            }catch(Exception unavailable){anchors=null;}
+            if(anchors==null&&cache!=null)anchors=cache.getString("attestation_public_roots",null);
             try{revocation=SpoofingHttp.get(SpoofingHttp.REVOCATION,4*1024*1024);}catch(IOException unavailable){}
         }
         return evaluate(chains,anchors,revocation,System.currentTimeMillis());
@@ -110,7 +118,13 @@ final class KeyboxStatus {
             }
             return new KeyboxStatus(expiry-now<14L*86400000?State.EXPIRING:State.VALID,now,expiry,chains.size());
         }catch(CertificateExpiredException expired){return new KeyboxStatus(State.EXPIRED,now,expiry,chains.size());}
+        catch(CertificateNotYetValidException future){return new KeyboxStatus(State.NOT_YET_VALID,now,expiry,chains.size());}
         catch(Exception invalid){return new KeyboxStatus(State.INVALID,now,expiry,chains.size());}
+    }
+    static boolean installable(KeyboxStatus status){
+        // Evolution X accepts a cryptographically trusted, unexpired chain when
+        // live revocation is unreachable. Its status remains UNKNOWN, never VALID.
+        return status.state==State.VALID||status.state==State.EXPIRING||status.state==State.UNKNOWN;
     }
     static String hash(byte[] bytes){
         try{byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);StringBuilder out=new StringBuilder();for(byte b:digest)out.append(String.format(Locale.ROOT,"%02x",b&255));return out.toString();}

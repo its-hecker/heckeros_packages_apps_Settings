@@ -34,6 +34,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
     private SpoofingData data;private SpoofingUi ui;
     private String page="hub",search="";private int importKind;private boolean showSystem,busy,ready,started;
     private int generation;
+    private int completedMessage=R.string.hub_saved;
     private boolean pifEnabled=true,trickyEnabled=true;
     private Map<String,String> profile=new LinkedHashMap<>();
     private LinkedHashMap<String,SpoofingTargets.Mode> targets=new LinkedHashMap<>();
@@ -69,9 +70,9 @@ public final class HeckerSpoofingHubActivity extends Activity {
     private interface Work {void run() throws Exception;}
     private void operation(Work work){
         if(busy||!ready)return;if(!SpoofingData.canManage()){toast(R.string.hub_primary_only);return;}
-        busy=true;render();int request=++generation;
+        busy=true;completedMessage=R.string.hub_saved;render();int request=++generation;
         worker.execute(()->{
-            try{work.run();runOnUiThread(()->{if(alive(request)){busy=false;toast(R.string.hub_saved);reload();}});}
+            try{work.run();runOnUiThread(()->{if(alive(request)){busy=false;toast(completedMessage);reload();}});}
             catch(Exception error){runOnUiThread(()->{if(alive(request)){busy=false;Toast.makeText(this,getString(R.string.hub_error,SpoofingData.error(error)),Toast.LENGTH_LONG).show();render();}});}
         });
     }
@@ -136,7 +137,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
         ui.heading(page,R.string.hub_key_management);
         String summary=getString(statusLabel(status.state));
         if(status.checkedAt>0)summary+="\n"+getString(R.string.hub_last_checked,DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(new Date(status.checkedAt)));
-        LinearLayout statusRow=ui.entry(page,R.string.hub_check_revocation,summary,()->operation(()->{String raw=data.get(HeckerSpoofConfig.KEYBOX);KeyboxStatus result=KeyboxStatus.check(raw,true);if(Objects.equals(raw,data.get(HeckerSpoofConfig.KEYBOX)))status=result;}));
+        LinearLayout statusRow=ui.entry(page,R.string.hub_check_revocation,summary,()->operation(()->{String raw=data.get(HeckerSpoofConfig.KEYBOX);KeyboxStatus result=KeyboxStatus.check(raw,true,data.prefs);if(Objects.equals(raw,data.get(HeckerSpoofConfig.KEYBOX)))status=result;}));
         if(status.state==KeyboxStatus.State.VALID)ui.badge(statusRow,R.string.hub_valid_badge);
         ui.heading(page,R.string.hub_target_configuration);
         ui.entry(page,R.string.hub_manage_targets,getString(R.string.hub_target_count,targets.size()),()->open("targets"));
@@ -147,10 +148,14 @@ public final class HeckerSpoofingHubActivity extends Activity {
     }
     private void fetchKeybox() throws Exception{
         String before=data.get(HeckerSpoofConfig.KEYBOX),raw=KeyboxStatus.xml(SpoofingHttp.get(SpoofingHttp.KEYBOX,256*1024));
-        KeyboxStatus checked=KeyboxStatus.check(raw,true);
-        if(checked.state!=KeyboxStatus.State.VALID&&checked.state!=KeyboxStatus.State.EXPIRING)throw new java.io.IOException(getString(R.string.hub_key_fetch_unverified));
+        KeyboxStatus checked=KeyboxStatus.check(raw,true,data.prefs);
+        if(!KeyboxStatus.installable(checked))throw new java.io.IOException(getString(R.string.hub_key_fetch_reason,getString(statusLabel(checked.state))));
         if(!Objects.equals(before,data.get(HeckerSpoofConfig.KEYBOX))||!data.trickyEnabled())throw new IllegalStateException("Configuration changed during fetch");
         data.put(HeckerSpoofConfig.KEYBOX,raw);data.prefs.edit().putString("keybox_source","provider").putLong("keybox_fetch",System.currentTimeMillis()).apply();status=checked;
+        // Attestation caches belong to the running processes; match Evolution X’s refresh behavior.
+        try{restartGoogle();}catch(Exception unavailable){completedMessage=R.string.hub_restart_needed;}
+        keybox=raw; // Keep the live certificate status when the page reloads.
+        if(checked.state==KeyboxStatus.State.UNKNOWN)completedMessage=R.string.hub_key_saved_unknown;
     }
     private String modeSummary(){
         EnumMap<SpoofingTargets.Mode,Integer> counts=new EnumMap<>(SpoofingTargets.Mode.class);
@@ -302,7 +307,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
         }
     }
     private int modeLabel(SpoofingTargets.Mode mode){switch(mode){case LEAF_HACK:return R.string.hub_mode_leaf;case GENERATE:return R.string.hub_mode_cert;case SKIP:return R.string.hub_mode_skip;default:return R.string.hub_mode_auto;}}
-    private int statusLabel(KeyboxStatus.State state){switch(state){case VALID:return R.string.hub_key_valid;case EXPIRING:return R.string.hub_key_expiring;case EXPIRED:return R.string.hub_key_expired;case REVOKED:return R.string.hub_key_revoked;case SUSPENDED:return R.string.hub_key_suspended;case INVALID:return R.string.hub_key_invalid;case UNTRUSTED:return R.string.hub_key_untrusted;case MISSING:return R.string.hub_key_missing;default:return R.string.hub_key_unknown;}}
+    private int statusLabel(KeyboxStatus.State state){switch(state){case VALID:return R.string.hub_key_valid;case EXPIRING:return R.string.hub_key_expiring;case EXPIRED:return R.string.hub_key_expired;case NOT_YET_VALID:return R.string.hub_key_not_yet_valid;case REVOKED:return R.string.hub_key_revoked;case SUSPENDED:return R.string.hub_key_suspended;case INVALID:return R.string.hub_key_invalid;case UNTRUSTED:return R.string.hub_key_untrusted;case MISSING:return R.string.hub_key_missing;default:return R.string.hub_key_unknown;}}
     private void confirm(int title,Runnable action){if(!editable())return;new AlertDialog.Builder(this).setTitle(title).setPositiveButton(android.R.string.ok,(d,w)->action.run()).setNegativeButton(android.R.string.cancel,null).show();}
     private void toast(int message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
 }

@@ -149,7 +149,8 @@ public final class HeckerSpoofingHubActivity extends Activity {
     private void fetchKeybox() throws Exception{
         String before=data.get(HeckerSpoofConfig.KEYBOX),raw=KeyboxStatus.xml(SpoofingHttp.get(SpoofingHttp.KEYBOX,256*1024));
         KeyboxStatus checked=KeyboxStatus.check(raw,true,data.prefs);
-        if(!KeyboxStatus.installable(checked))throw new java.io.IOException(getString(R.string.hub_key_fetch_reason,getString(statusLabel(checked.state))));
+        if(!KeyboxStatus.installable(checked))throw new java.io.IOException(getString(R.string.hub_key_fetch_reason,
+                getString(statusLabel(checked.state))+(checked.detail.isBlank()?"":". "+checked.detail)));
         if(!Objects.equals(before,data.get(HeckerSpoofConfig.KEYBOX))||!data.trickyEnabled())throw new IllegalStateException("Configuration changed during fetch");
         data.put(HeckerSpoofConfig.KEYBOX,raw);data.prefs.edit().putString("keybox_source","provider").putLong("keybox_fetch",System.currentTimeMillis()).apply();status=checked;
         // Attestation caches belong to the running processes; match Evolution X’s refresh behavior.

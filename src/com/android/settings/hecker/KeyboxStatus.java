@@ -23,7 +23,9 @@ final class KeyboxStatus {
     final State state;
     final long checkedAt,expiresAt;
     final int chains;
-    KeyboxStatus(State state,long checkedAt,long expiresAt,int chains){this.state=state;this.checkedAt=checkedAt;this.expiresAt=expiresAt;this.chains=chains;}
+    final String detail;
+    KeyboxStatus(State state,long checkedAt,long expiresAt,int chains){this(state,checkedAt,expiresAt,chains,"");}
+    KeyboxStatus(State state,long checkedAt,long expiresAt,int chains,String detail){this.state=state;this.checkedAt=checkedAt;this.expiresAt=expiresAt;this.chains=chains;this.detail=detail;}
     private static final Set<String> ROOT_HASHES=Set.of(
         "1ef1a04b8ba58ab94589ac498c8982a783f24ea7307e0159a0c3a73b377d87cc",
         "cedb1cb6dc896ae5ec797348bce9286753c2b38ee71ce0fbe34a9a1248800dfc",
@@ -56,8 +58,15 @@ final class KeyboxStatus {
         return result;
     }
     private static X509Certificate certificate(String content) throws Exception{
-        String pem=content.trim();
-        byte[] bytes=pem.contains("BEGIN CERTIFICATE")?pem.getBytes(StandardCharsets.US_ASCII):Base64.getMimeDecoder().decode(pem);
+        String pem=content.strip();
+        // Decode PEM ourselves: Android providers do not all accept indented
+        // PEM/CRLF from an XML text node. CertificateFactory always receives DER.
+        if(pem.startsWith("-----BEGIN CERTIFICATE-----")){
+            String end="-----END CERTIFICATE-----";
+            if(!pem.endsWith(end))throw new CertificateException("Incomplete certificate PEM");
+            pem=pem.substring("-----BEGIN CERTIFICATE-----".length(),pem.length()-end.length());
+        }
+        byte[] bytes=Base64.getDecoder().decode(pem.replaceAll("\\s+",""));
         return (X509Certificate)CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(bytes));
     }
     private static List<X509Certificate> roots(String raw) throws Exception{
@@ -78,7 +87,7 @@ final class KeyboxStatus {
     static KeyboxStatus check(String raw,boolean network,android.content.SharedPreferences cache){
         if(raw==null||raw.isBlank())return new KeyboxStatus(State.MISSING,0,0,0);
         List<List<X509Certificate>> chains;
-        try{chains=chains(xml(raw));}catch(Exception bad){return new KeyboxStatus(State.INVALID,0,0,0);}
+        try{chains=chains(xml(raw));}catch(Exception bad){return new KeyboxStatus(State.INVALID,0,0,0,"The downloaded certificate XML could not be parsed ("+bad.getClass().getSimpleName()+").");}
         String revocation=null,anchors=null;
         if(network){
             try{
@@ -95,33 +104,60 @@ final class KeyboxStatus {
         long expiry=Long.MAX_VALUE;List<X509Certificate> trusted=new ArrayList<>();
         try{if(anchors!=null)trusted=roots(anchors);}catch(Exception unavailable){}
         Set<String> serials=new HashSet<>();
+        int chainNumber=0,certificateNumber=0;
         try{
             if(chains.isEmpty())return new KeyboxStatus(State.INVALID,now,0,0);
             for(List<X509Certificate> chain:chains){
+                chainNumber++;certificateNumber=0;
                 if(chain.size()<2)return new KeyboxStatus(State.INVALID,now,0,chains.size());
                 for(int i=0;i<chain.size();i++){
                     X509Certificate cert=chain.get(i);cert.checkValidity(new Date(now));
+                    certificateNumber=i+1;
                     expiry=Math.min(expiry,cert.getNotAfter().getTime());
-                    cert.verify(chain.get(Math.min(i+1,chain.size()-1)).getPublicKey());
+                    if(i+1<chain.size()){
+                        X509Certificate issuer=chain.get(i+1);
+                        if(!cert.getIssuerX500Principal().equals(issuer.getSubjectX500Principal()))throw new CertificateException("Issuer mismatch");
+                        cert.verify(issuer.getPublicKey());
+                    }
                     serials.add(cert.getSerialNumber().toString(16));serials.add(cert.getSerialNumber().toString());
                 }
                 X509Certificate root=chain.get(chain.size()-1);boolean matches=false;
                 if(trusted.isEmpty())matches=ROOT_HASHES.contains(hash(root.getEncoded()));
-                else for(X509Certificate anchor:trusted)matches|=MessageDigest.isEqual(root.getPublicKey().getEncoded(),anchor.getPublicKey().getEncoded());
+                else for(X509Certificate anchor:trusted){
+                    // Providers may omit the final public trust anchor. Accept
+                    // that only when its issuer and signature verify against an
+                    // independently obtained Google root.
+                    if(MessageDigest.isEqual(root.getEncoded(),anchor.getEncoded())){matches=true;break;}
+                    if(!root.getIssuerX500Principal().equals(anchor.getSubjectX500Principal()))continue;
+                    try{root.verify(anchor.getPublicKey());anchor.checkValidity(new Date(now));
+                        expiry=Math.min(expiry,anchor.getNotAfter().getTime());
+                        serials.add(anchor.getSerialNumber().toString(16));serials.add(anchor.getSerialNumber().toString());
+                        matches=true;break;
+                    }catch(GeneralSecurityException notIssuer){}
+                }
                 if(!matches)return new KeyboxStatus(State.UNTRUSTED,now,expiry,chains.size());
+                if(root.getSubjectX500Principal().equals(root.getIssuerX500Principal()))root.verify(root.getPublicKey());
             }
+        }catch(CertificateExpiredException expired){return new KeyboxStatus(State.EXPIRED,now,expiry,chains.size());}
+        catch(CertificateNotYetValidException future){return new KeyboxStatus(State.NOT_YET_VALID,now,expiry,chains.size());}
+        catch(Exception invalid){return new KeyboxStatus(State.INVALID,now,expiry,chains.size(),
+                "Certificate "+certificateNumber+" in chain "+chainNumber+" could not be verified ("+invalid.getClass().getSimpleName()+").");}
+        // Transport/JSON errors are revocation UNKNOWN, not a broken certificate
+        // chain. A malformed signature above can never reach this branch.
+        try{
             if(revocation==null)return new KeyboxStatus(State.UNKNOWN,now,expiry,chains.size());
             JSONObject response=new JSONObject(revocation);JSONObject entries=response.optJSONObject("entries");
             if(entries==null)return new KeyboxStatus(State.UNKNOWN,now,expiry,chains.size());
+            boolean unknown=false,suspended=false;
             for(String serial:serials){JSONObject entry=entries.optJSONObject(serial);if(entry==null)continue;
                 if("REVOKED".equalsIgnoreCase(entry.optString("status")))return new KeyboxStatus(State.REVOKED,now,expiry,chains.size());
-                if("SUSPENDED".equalsIgnoreCase(entry.optString("status")))return new KeyboxStatus(State.SUSPENDED,now,expiry,chains.size());
-                return new KeyboxStatus(State.UNKNOWN,now,expiry,chains.size());
+                if("SUSPENDED".equalsIgnoreCase(entry.optString("status")))suspended=true;
+                else unknown=true;
             }
+            if(suspended)return new KeyboxStatus(State.SUSPENDED,now,expiry,chains.size());
+            if(unknown)return new KeyboxStatus(State.UNKNOWN,now,expiry,chains.size());
             return new KeyboxStatus(expiry-now<14L*86400000?State.EXPIRING:State.VALID,now,expiry,chains.size());
-        }catch(CertificateExpiredException expired){return new KeyboxStatus(State.EXPIRED,now,expiry,chains.size());}
-        catch(CertificateNotYetValidException future){return new KeyboxStatus(State.NOT_YET_VALID,now,expiry,chains.size());}
-        catch(Exception invalid){return new KeyboxStatus(State.INVALID,now,expiry,chains.size());}
+        }catch(JSONException unavailable){return new KeyboxStatus(State.UNKNOWN,now,expiry,chains.size());}
     }
     static boolean installable(KeyboxStatus status){
         // Evolution X accepts a cryptographically trusted, unexpired chain when

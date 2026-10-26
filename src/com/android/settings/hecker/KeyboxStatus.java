@@ -31,7 +31,9 @@ final class KeyboxStatus {
     static String xml(String raw){
         if(raw==null||raw.isBlank())return "";
         if(raw.getBytes(StandardCharsets.UTF_8).length>256*1024)throw new IllegalArgumentException("Keybox is too large");
-        String value=raw.trim();if(!value.startsWith("<"))value=new String(Base64.getMimeDecoder().decode(value),StandardCharsets.UTF_8).trim();
+        String value=raw.strip();if(value.startsWith("\uFEFF"))value=value.substring(1).strip();
+        if(!value.startsWith("<"))value=new String(Base64.getMimeDecoder().decode(value),StandardCharsets.UTF_8).strip();
+        if(value.startsWith("\uFEFF"))value=value.substring(1).strip();
         String upper=value.toUpperCase(Locale.ROOT);
         if(value.getBytes(StandardCharsets.UTF_8).length>256*1024||!value.startsWith("<")||upper.contains("<!DOCTYPE")||upper.contains("<!ENTITY"))throw new IllegalArgumentException("Invalid keybox XML");
         return value;

@@ -73,7 +73,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
         busy=true;completedMessage=R.string.hub_saved;render();int request=++generation;
         worker.execute(()->{
             try{work.run();runOnUiThread(()->{if(alive(request)){busy=false;toast(completedMessage);reload();}});}
-            catch(Exception error){runOnUiThread(()->{if(alive(request)){busy=false;Toast.makeText(this,getString(R.string.hub_error,SpoofingData.error(error)),Toast.LENGTH_LONG).show();render();}});}
+            catch(Exception error){runOnUiThread(()->{if(alive(request)){busy=false;new AlertDialog.Builder(this).setTitle(R.string.hub_title).setMessage(getString(R.string.hub_error,SpoofingData.error(error))).setPositiveButton(android.R.string.ok,null).show();render();}});}
         });
     }
     private boolean alive(int request){return request==generation&&!isDestroyed()&&!isFinishing();}
@@ -96,7 +96,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
                 for(String pkg:tt.keySet())if(!seen.contains(pkg))found.add(new App(pkg));
                 final Map<String,String> resolved=pp;
                 runOnUiThread(()->{if(!alive(request))return;pifEnabled=pe;trickyEnabled=te;profile=resolved;targets=tt;keybox=kk;this.patch=patch;this.games=games;status=checked;apps=found;ready=true;SpoofingMaintenance.schedule(this);render();consumeImport();});
-            }catch(Exception error){runOnUiThread(()->{if(alive(request)){ready=true;Toast.makeText(this,getString(R.string.hub_error,SpoofingData.error(error)),Toast.LENGTH_LONG).show();render();}});}
+            }catch(Exception error){runOnUiThread(()->{if(alive(request)){ready=true;new AlertDialog.Builder(this).setTitle(R.string.hub_title).setMessage(getString(R.string.hub_error,SpoofingData.error(error))).setPositiveButton(android.R.string.ok,null).show();render();}});}
         });
     }
     private void render(){
@@ -198,18 +198,24 @@ public final class HeckerSpoofingHubActivity extends Activity {
             card.setFocusable(true);card.setOnClickListener(v->editProfile(key,label));page.addView(card);
         }
         ui.heading(page,R.string.hub_advanced);
-        String[] flags={"spoofBuild","spoofProps","spoofProvider","spoofSignature","spoofVendingBuild","spoofVendingSdk"};
-        int[] names={R.string.hub_spoof_build,R.string.hub_spoof_props,R.string.hub_spoof_provider,R.string.hub_spoof_signature,R.string.hub_spoof_vending,R.string.hub_spoof_sdk};
+        String[] flags={"spoofBuild","spoofProps","spoofProvider","spoofSignature"};
+        int[] names={R.string.hub_spoof_build,R.string.hub_spoof_props,R.string.hub_spoof_provider,R.string.hub_spoof_signature};
         for(int i=0;i<flags.length;i++){
-            String flag=flags[i];boolean selected=profile.containsKey(flag)?Set.of("1","true").contains(profile.get(flag)):Set.of("spoofBuild","spoofProps","spoofVendingBuild").contains(flag);
+            String flag=flags[i];boolean selected=profile.containsKey(flag)?Set.of("1","true").contains(profile.get(flag)):Set.of("spoofBuild","spoofProps").contains(flag);
             ui.switchEntry(page,names[i],null,selected,editable()&&!profile.isEmpty(),null,value->operation(()->{
                 Map<String,String> fields=data.profile();fields.put(flag,value?"1":"0");data.profile(fields,data.prefs.getBoolean("pif_imported",true));
             }));
         }
+        ui.entry(page,R.string.hub_spoof_vending,profile.getOrDefault("spoofVendingFinger",profile.getOrDefault("spoofVendingBuild","0")),
+                ()->editProfile("spoofVendingFinger",R.string.hub_spoof_vending));
+        ui.entry(page,R.string.hub_spoof_sdk,profile.getOrDefault("spoofVendingSdk","0"),
+                ()->editProfile("spoofVendingSdk",R.string.hub_spoof_sdk));
         ui.fullButton(page,R.string.hub_restart_google,()->confirm(R.string.hub_restart_confirm,()->operation(this::restartGoogle)));
         TextView note=ui.text(R.string.hub_pif_note,13,false);note.setTextColor(ui.muted);page.addView(note);
     }
-    private void editProfile(String key,int label){if(!editable())return;EditText input=new EditText(this);input.setText(profile.get(key));
+    private void editProfile(String key,int label){if(!editable())return;EditText input=new EditText(this);input.setText(profile.getOrDefault(key,Set.of("spoofVendingFinger","spoofVendingSdk").contains(key)?"0":""));
+        if(key.equals("spoofVendingFinger"))input.setHint(R.string.hub_vending_fingerprint_hint);
+        if(key.equals("spoofVendingSdk"))input.setHint(R.string.hub_vending_sdk_hint);
         new AlertDialog.Builder(this).setTitle(label).setView(input).setPositiveButton(android.R.string.ok,(d,w)->operation(()->{
             Map<String,String> value=data.profile();value.put(key,input.getText().toString().trim());data.profile(value,true);
         })).setNegativeButton(android.R.string.cancel,null).show();
@@ -231,7 +237,7 @@ public final class HeckerSpoofingHubActivity extends Activity {
                     data.profile(fresh,false);
                 });
             }).setNegativeButton(android.R.string.cancel,null).show();
-        });}catch(Exception error){runOnUiThread(()->{if(alive(request)){busy=false;render();Toast.makeText(this,getString(R.string.hub_error,SpoofingData.error(error)),Toast.LENGTH_LONG).show();}});}});
+        });}catch(Exception error){runOnUiThread(()->{if(alive(request)){busy=false;render();new AlertDialog.Builder(this).setTitle(R.string.hub_title).setMessage(getString(R.string.hub_error,SpoofingData.error(error))).setPositiveButton(android.R.string.ok,null).show();}});}});
     }
     private void renderGames(LinearLayout page){
         page.addView(ui.text(R.string.hub_games_summary,15,false));ui.fullButton(page,R.string.hub_import,()->pick(GAMES));

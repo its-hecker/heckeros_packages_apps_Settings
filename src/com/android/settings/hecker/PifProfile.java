@@ -10,9 +10,10 @@ import java.util.Set;
 public final class PifProfile {
     private static final Set<String> FIELDS = Set.of("MANUFACTURER", "MODEL", "PRODUCT",
             "DEVICE", "FINGERPRINT", "SECURITY_PATCH", "DEVICE_INITIAL_SDK_INT", "BRAND",
-            "HARDWARE", "ID", "RELEASE", "INCREMENTAL", "TYPE", "TAGS");
+            "HARDWARE", "ID", "RELEASE", "INCREMENTAL", "TYPE", "TAGS",
+            "spoofVendingFinger", "spoofVendingSdk", "verboseLogs", "VERBOSE_LOGS");
     private static final Set<String> FLAGS = Set.of("spoofBuild", "spoofProps", "spoofProvider",
-            "spoofSignature", "spoofVendingBuild", "spoofVendingSdk", "spoofPhotos", "DEBUG");
+            "spoofSignature", "spoofVendingBuild", "spoofPhotos", "DEBUG");
 
     public static Map<String, String> validate(Map<String, String> source) {
         if (source.size() > 32) throw new IllegalArgumentException("Too many profile fields");
@@ -30,6 +31,17 @@ public final class PifProfile {
             }
             if (FLAGS.contains(key) && !Set.of("0", "1", "true", "false").contains(value)) {
                 throw new IllegalArgumentException("Invalid switch: " + key);
+            }
+            if (key.equals("spoofVendingSdk") && !Set.of("true", "false").contains(value)) {
+                int sdk = Integer.parseInt(value);
+                if (sdk < 0 || sdk > 99) throw new IllegalArgumentException("Invalid Play Store SDK");
+            }
+            if ((key.equals("verboseLogs") || key.equals("VERBOSE_LOGS")) && !value.matches("[0-9]")) {
+                throw new IllegalArgumentException("Invalid log level");
+            }
+            if (key.equals("spoofVendingFinger") && !Set.of("0", "1", "true", "false").contains(value)
+                    && !value.matches("[^/\\s:]+/[^/\\s:]+/[^/\\s:]+:[^/\\s:]+/[^/\\s:]+/[^/\\s:]+:[^/\\s:]+/[^/\\s:]+")) {
+                throw new IllegalArgumentException("Invalid Play Store fingerprint");
             }
             result.put(key, value);
         }

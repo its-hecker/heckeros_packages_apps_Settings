@@ -6410,5 +6410,9 @@
             android:exported="false"
             android:theme="@style/Theme.SubSettings"
             android:label="@string/hecker_integrity_title" />
+        <activity android:name="com.android.settings.hecker.HeckerSpoofingHubActivity"
+            android:exported="false" android:theme="@style/Theme.SubSettings" android:label="@string/hub_title" />
+        <service android:name="com.android.settings.hecker.SpoofingMaintenance"
+            android:exported="true" android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

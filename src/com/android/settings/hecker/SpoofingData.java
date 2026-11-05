@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.*;
 import org.json.*;
 
-/** Maps Evolution X's screens to HeckerOS's existing UID-scoped private configuration store. */
+/** One configuration store for the Penguin integrity integration and legacy imports. */
 final class SpoofingData {
     static final String PROFILE="hecker_pif_config", PIF_ENABLED="hecker_pif_enabled";
     static final Set<String> XPOSED=Set.of("org.lsposed.manager","io.github.lsposed.manager",
@@ -33,6 +33,11 @@ final class SpoofingData {
     void put(int kind,String value){HeckerSpoofConfig.put(kind,value);}
     boolean pifEnabled(){return Settings.Global.getInt(context.getContentResolver(),PIF_ENABLED,1)!=0;}
     void pifEnabled(boolean enabled){if(!Settings.Global.putInt(context.getContentResolver(),PIF_ENABLED,enabled?1:0))throw new IllegalStateException("Could not save the enable switch");}
+    boolean photosEnabled(){return Settings.Global.getInt(context.getContentResolver(),"hecker_pif_photos",1)!=0;}
+    void photosEnabled(boolean enabled){
+        if(!Settings.Global.putInt(context.getContentResolver(),"hecker_pif_photos",enabled?1:0))
+            throw new IllegalStateException("Could not save Photos compatibility");
+    }
     boolean trickyEnabled(){
         try{String value=get(HeckerSpoofConfig.OPTIONS);return value==null||new JSONObject(value).optBoolean("trickystore_enabled",true);}
         catch(JSONException error){throw new IllegalStateException("Invalid saved options");}

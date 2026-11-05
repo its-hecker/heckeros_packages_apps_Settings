@@ -1,5 +1,5 @@
 <resources>
-  <string name="hub_title">伪装中心</string>
+  <string name="hub_title">Play 完整性</string>
   <string name="hub_back">返回</string>
   <string name="hub_intro">管理兼容性配置、密钥盒证书和目标应用。</string>
   <string name="hub_integrity_category">Play Integrity Fix</string>
@@ -96,4 +96,10 @@
     <string name="hub_restart_needed">密钥箱已保存。请重启 Google 服务以启用。</string>
   <string name="hub_vending_fingerprint_hint">0 = 关闭，1 = 使用配置的指纹，或输入自定义指纹</string>
   <string name="hub_vending_sdk_hint">0 = 关闭，1 = SDK 32，或输入 SDK 版本</string>
+  <string name="hub_photos">Google 相册兼容性</string>
+  <string name="hub_photos_summary">为 Google 相册使用 Pixel XL 配置。更改后请重新启动相册。</string>
+  <string name="hub_export_targets">导出目标应用</string>
+  <string name="hub_export_profile">导出 PIF 配置</string>
+  <string name="hub_export_games">导出游戏配置</string>
+  <string name="hub_export_unavailable">没有可用的文档选择器</string>
 </resources>

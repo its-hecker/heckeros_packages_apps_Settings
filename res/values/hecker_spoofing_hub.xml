@@ -1,5 +1,5 @@
 <resources>
-  <string name="hub_title">Spoofing hub</string>
+  <string name="hub_title">Play Integrity</string>
   <string name="hub_back">Back</string>
   <string name="hub_intro">Manage compatibility profiles, keybox certificates and target apps.</string>
   <string name="hub_integrity_category">Play Integrity Fix</string>
@@ -96,4 +96,10 @@
     <string name="hub_restart_needed">Keybox saved. Use Restart Google services to activate it.</string>
   <string name="hub_vending_fingerprint_hint">0 = off, 1 = configured fingerprint, or enter a fingerprint</string>
   <string name="hub_vending_sdk_hint">0 = off, 1 = SDK 32, or enter an SDK level</string>
+  <string name="hub_photos">Google Photos compatibility</string>
+  <string name="hub_photos_summary">Use the Pixel XL profile for Google Photos. Restart Photos after changing this setting.</string>
+  <string name="hub_export_targets">Export target apps</string>
+  <string name="hub_export_profile">Export PIF profile</string>
+  <string name="hub_export_games">Export game profiles</string>
+  <string name="hub_export_unavailable">No document picker is available</string>
 </resources>

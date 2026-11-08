@@ -226,15 +226,15 @@ final class FacePoseGridView extends View {
             float reveal = mReveal[bucket];
             float guide = bucket == mGuideBucket ? mGuideStrength : 0;
             mPaint.setStyle(Paint.Style.FILL);
-            mPaint.setColor(alpha(mAccent, (int) ((inFrame ? 30 : 15) * reveal)));
+            mPaint.setColor(alpha(mAccent, (int) ((inFrame ? 115 : 60) * reveal)));
             canvas.drawPath(cell, mPaint);
             mPaint.setStyle(Paint.Style.STROKE);
             if (reveal > 0 || guide > 0) {
                 mPaint.setStrokeWidth(dp(5.5f));
-                mPaint.setColor(alpha(mAccent, (int) (14 * Math.max(reveal, guide))));
+                mPaint.setColor(alpha(mAccent, (int) (90 * Math.max(reveal, guide))));
                 canvas.drawPath(cell, mPaint);
             }
-            mPaint.setStrokeWidth(dp(1.15f + 0.55f * Math.max(reveal, guide)));
+            mPaint.setStrokeWidth(dp(1.15f + 1.85f * Math.max(reveal, guide)));
             int color = reveal > 0 ? mAccent : mNeutral;
             int opacity = (int) ((inFrame ? 102 : 58) + (inFrame ? 126 : 77) * reveal);
             if (guide > 0) { color = mAccent; opacity = Math.max(opacity, (int) (220 * guide)); }

@@ -57,7 +57,7 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
 
     private static final long PREVIEW_REVEAL_FALLBACK_MS = 600;
 
-    private static final int MAX_PREVIEW_WIDTH = 1920;
+    private static final int MAX_PREVIEW_WIDTH = 1440;
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -371,12 +371,21 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
      * Chooses the optimal resolution for the camera to open.
      */
     private Size chooseOptimalSize(Size[] choices) {
+        Size fullFrame = null;
         for (int i = 0; i < choices.length; i++) {
             if (choices[i].getHeight() == MAX_PREVIEW_HEIGHT
                     && choices[i].getWidth() == MAX_PREVIEW_WIDTH) {
                 return choices[i];
             }
+            // Prefer another supported 4:3 stream before falling back to a crop.
+            Size size = choices[i];
+            if ((long) size.getWidth() * 3 == (long) size.getHeight() * 4
+                    && size.getWidth() <= MAX_PREVIEW_WIDTH
+                    && (fullFrame == null || size.getWidth() > fullFrame.getWidth())) {
+                fullFrame = size;
+            }
         }
+        if (fullFrame != null) return fullFrame;
         Log.w(TAG, "Unable to find a good resolution");
         return choices[0];
     }
@@ -390,18 +399,9 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
      * @param viewHeight The height of `mTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
-        if (mTextureView == null) {
+        if (mTextureView == null || mPreviewSize == null || viewWidth <= 0 || viewHeight <= 0) {
             return;
         }
-
-        // Fix the aspect ratio
-        float scaleX = (float) viewWidth / mPreviewSize.getWidth();
-        float scaleY = (float) viewHeight / mPreviewSize.getHeight();
-
-        // Now divide by smaller one so it fills up the original space.
-        float smaller = Math.min(scaleX, scaleY);
-        scaleX = scaleX / smaller;
-        scaleY = scaleY / smaller;
 
         final TypedValue tx = new TypedValue();
         final TypedValue ty = new TypedValue();
@@ -410,11 +410,14 @@ public class FaceEnrollPreviewFragment extends InstrumentedPreferenceFragment
         getResources().getValue(R.dimen.face_preview_translate_y, ty, true /* resolveRefs */);
         getResources().getValue(R.dimen.face_preview_scale, scale, true /* resolveRefs */);
 
-        // Apply the transformation/scale
+        // Centre the frame using the measured view, including on the larger Coral display.
+        // Resource translations are optional calibration offsets relative to that centre.
+        float[] geometry = FacePreviewGeometry.transform(viewWidth, viewHeight,
+                mPreviewSize.getWidth(), mPreviewSize.getHeight(), scale.getFloat(),
+                tx.getFloat(), ty.getFloat());
         final Matrix transform = new Matrix();
-        mTextureView.getTransform(transform);
-        transform.setScale(scaleX * scale.getFloat(), scaleY * scale.getFloat());
-        transform.postTranslate(tx.getFloat(), ty.getFloat());
+        transform.setScale(geometry[0], geometry[1]);
+        transform.postTranslate(geometry[2], geometry[3]);
         mTextureView.setTransform(transform);
     }
 
